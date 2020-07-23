@@ -1,0 +1,15 @@
+version: '3'
+services:
+  golang:
+    image: golang:1.13.10
+    container_name: goeth
+    tty: true
+    volumes:
+      - ./src:/go/src/app
+    working_dir: /go/src/app
+    environment: 
+      - LANG=C.UTF-8
+#    environment: 
+#      - GO111MODULE=auto
+#    ports:
+#      - "8080:8080"
