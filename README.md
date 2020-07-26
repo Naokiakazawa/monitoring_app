@@ -12,5 +12,5 @@ icon_emoji =
 projectid = 
 
 [address]
-0x = 
+tether = 
 ```

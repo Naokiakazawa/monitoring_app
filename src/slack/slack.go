@@ -27,5 +27,3 @@ func SlackWebhook(channel, username, text, icon_emoji, webhook string) (err erro
 	defer response.Body.Close()
 	return nil
 }
-
-//:を忘れる、mainの()を忘れる、go getを忘れる
