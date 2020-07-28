@@ -82,20 +82,24 @@ func txsearcher(i int64, wg *sync.WaitGroup, client *ethclient.Client) {
 	block, err := client.BlockByNumber(context.Background(), Block_Number)
 	FailOnError(err)
 	if block != nil && block.Transactions() != nil {
-		txs := block.Transactions()
-		webhook("Block Number: " + block.Number().String() + "\n" + "Transaction counts:  " + strconv.Itoa(len(txs)))
-		bar := uiprogress.AddBar(len(txs)).AppendCompleted().PrependElapsed()
-		bar.Fill = '='
-		bar.Head = '>'
-		bar.Empty = ' '
-		bar.Width = 50
-		bar.PrependFunc(func(b *uiprogress.Bar) string {
-			return fmt.Sprintf("#%s (%d/%d)", strconv.FormatInt(i, 10), b.Current(), len(txs))
-		})
-
-		records := [][]string{
-			[]string{"Block_Number", "Tx_Hash", "fromAddress", "Value", "toAddress"},
-		}
+		switch {
+		case len(block.Transactions()) == 0:
+			log.Printf("#%s is No Transactions", strconv.FormatInt(i, 10))
+		default:
+			txs := block.Transactions()
+			webhook("Block Number: " + block.Number().String() + "\n" + "Transaction counts:  " + strconv.Itoa(len(txs)))
+			bar := uiprogress.AddBar(len(txs)).AppendCompleted().PrependElapsed()
+			bar.Fill = '='
+			bar.Head = '>'
+			bar.Empty = ' '
+			bar.Width = 50
+			bar.PrependFunc(func(b *uiprogress.Bar) string {
+				return fmt.Sprintf("#%s (%d/%d)", strconv.FormatInt(i, 10), b.Current(), len(txs))
+			})
+	
+			records := [][]string{
+				[]string{"Block_Number", "Tx_Hash", "fromAddress", "Value", "toAddress"},
+			}
 			for _, tx := range txs {
 				bar.Incr()
 				if tx.To() == nil {
@@ -119,16 +123,22 @@ func txsearcher(i int64, wg *sync.WaitGroup, client *ethclient.Client) {
 					records = append(records, items)
 				}
 			}
-		file_path := "record_" + strconv.FormatInt(i, 10) + ".csv"
-		file, err := os.Create(file_path)
-		FailOnError(err)
-
-		w := csv.NewWriter(file)
-		err = w.WriteAll(records)
-		FailOnError(err)
-		w.Flush()
-		file.Close()
+			file_path := "record_" + strconv.FormatInt(i, 10) + ".csv"
+			file, err := os.Create(file_path)
+			FailOnError(err)
+	
+			w := csv.NewWriter(file)
+			err = w.WriteAll(records)
+			FailOnError(err)
+			w.Flush()
+			file.Close()
+		}
 	}
+}
+
+func isExist(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
 }
 
 func joincsv(file_name string, start_block int64, end_block int64) {
@@ -139,6 +149,9 @@ func joincsv(file_name string, start_block int64, end_block int64) {
 	}
 	for i := start_block; i < end_block; i++ {
 		file_path := "record_" + strconv.FormatInt(i, 10) + ".csv"
+		if isExist(file_path) == false {
+			continue
+		}
 		record_file, err := os.Open(file_path)
 		FailOnError(err)
 		read := csv.NewReader(record_file)
@@ -156,8 +169,8 @@ func joincsv(file_name string, start_block int64, end_block int64) {
 }
 
 func main() {
-	var start_block int64 = 10523035
-	var end_block int64 = 10523041
+	var start_block int64 = 10523034
+	var end_block int64 = 10523045
 	var RecordFilePath string = "record.csv"
 
 	client, err := ethclient.Dial("https://mainnet.infura.io/v3/" + Config.ProjectID)
@@ -172,7 +185,8 @@ func main() {
 	}
 	wg.Wait()
 	uiprogress.Stop()
-	log.Println("success!!")
 
 	joincsv(RecordFilePath, start_block, end_block)
+
+	log.Println("success!!")
 }
