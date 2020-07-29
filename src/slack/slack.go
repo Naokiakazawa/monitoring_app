@@ -2,8 +2,9 @@ package slack
 
 import (
 	"bytes"
-	"log"
 	"net/http"
+
+	"app/tools"
 )
 
 func SlackWebhook(channel, username, text, icon_emoji, webhook string) (err error) {
@@ -13,17 +14,13 @@ func SlackWebhook(channel, username, text, icon_emoji, webhook string) (err erro
 		webhook,
 		bytes.NewBuffer([]byte(jsonStr)),
 	)
-	if err != nil{
-		log.Fatal(err)
-	}
+	tools.FailOnError(err)
 
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
 	response, err := client.Do(req)
-	if err != nil{
-		log.Fatal(err)
-	}
+	tools.FailOnError(err)
 	defer response.Body.Close()
 	return nil
 }
