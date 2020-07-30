@@ -14,7 +14,7 @@ func Joincsv(file_name string, start_block int64, end_block int64) {
 	joined_records := [][]string{
 		[]string{"Block_Number", "Tx_Hash", "fromAddress", "Value", "toAddress"},
 	}
-	for i := start_block; i < end_block; i++ {
+	for i := start_block; i <= end_block; i++ {
 		file_path := "data/record_" + strconv.FormatInt(i, 10) + ".csv"
 		if tools.IsExist(file_path) == false {
 			continue

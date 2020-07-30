@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/csv"
 	"fmt"
-	"log"
 	"math/big"
 	"os"
 	"strconv"
@@ -19,15 +18,14 @@ import (
 	"app/tools"
 )
 
-func Searcher(i int64, addr string, wg *sync.WaitGroup, client *ethclient.Client) {
-	defer wg.Done()
+func Searcher(w int, i int64, addr string, client *ethclient.Client) {
 	Block_Number := big.NewInt(i)
 	block, err := client.BlockByNumber(context.Background(), Block_Number)
 	tools.FailOnError(err)
 	if block != nil && block.Transactions() != nil {
 		switch {
 		case len(block.Transactions()) == 0:
-			log.Printf("#%s is No Transactions", strconv.FormatInt(i, 10))
+			break
 		default:
 			txs := block.Transactions()
 //			webhook("Block Number: " + block.Number().String() + "\n" + "Transaction counts:  " + strconv.Itoa(len(txs)))
@@ -37,7 +35,7 @@ func Searcher(i int64, addr string, wg *sync.WaitGroup, client *ethclient.Client
 			bar.Empty = ' '
 			bar.Width = 50
 			bar.PrependFunc(func(b *uiprogress.Bar) string {
-				return fmt.Sprintf("#%s (%d/%d)", strconv.FormatInt(i, 10), b.Current(), len(txs))
+				return fmt.Sprintf("Worker:%d| #%s (%d/%d)", w, strconv.FormatInt(i, 10), b.Current(), len(txs))
 			})
 	
 			records := [][]string{
@@ -76,5 +74,12 @@ func Searcher(i int64, addr string, wg *sync.WaitGroup, client *ethclient.Client
 			w.Flush()
 			file.Close()
 		}
+	}
+}
+
+func Worker(w int, jobs <-chan int64, addr string, wg *sync.WaitGroup, client *ethclient.Client){
+	for j := range jobs {
+		defer wg.Done()
+		Searcher(w, j, addr, client)
 	}
 }

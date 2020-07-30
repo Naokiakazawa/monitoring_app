@@ -50,9 +50,11 @@ func webhook(text string) {
 }
 
 func main() {
-	var start_block int64 = 10523034
-	var end_block int64 = 10523045
-	var RecordFilePath string = "record.csv"
+	var WORKER_COUNT int = 5
+	var START_BLOCK int64 = 10523000
+	var END_BLOCK int64 = 10523030
+	var RECORD_FILE_PATH string = "record.csv"
+	var ADDR string = Config.Address
 
 	client, err := ethclient.Dial("https://mainnet.infura.io/v3/" + Config.ProjectID)
 	tools.FailOnError(err)
@@ -64,13 +66,10 @@ func main() {
 	err = os.Mkdir("data", 0777)
 	tools.FailOnError(err)
 
-	for i := start_block; i < end_block; i++ {
-		wg.Add(1)
-		go txsearcher.Searcher(i, Config.Address, &wg, client)
-	}
+	txsearcher.Dispatch(WORKER_COUNT, START_BLOCK, END_BLOCK, ADDR, &wg, client)
 	wg.Wait()
 	uiprogress.Stop()
 
-	csvutil.Joincsv(RecordFilePath, start_block, end_block)
+	csvutil.Joincsv(RECORD_FILE_PATH, START_BLOCK, END_BLOCK)
 	log.Println("success!!")
 }
