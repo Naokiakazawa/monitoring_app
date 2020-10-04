@@ -50,9 +50,9 @@ func webhook(text string) {
 }
 
 func main() {
-	var WORKER_COUNT int = 5
+	var WORKER_COUNT int = 8
 	var START_BLOCK int64 = 10523000
-	var END_BLOCK int64 = 10523030
+	var END_BLOCK int64 = 10523080
 	var RECORD_FILE_PATH string = "record.csv"
 	var ADDR string = Config.Address
 
